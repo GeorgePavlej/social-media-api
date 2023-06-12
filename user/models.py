@@ -59,8 +59,3 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     objects = UserManager()
-
-    borrowed_books = models.ManyToManyField(
-        "books.Book",
-        related_name="borrowed_by"
-    )
