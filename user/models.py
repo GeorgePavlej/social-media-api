@@ -1,3 +1,5 @@
+import os
+import uuid
 from typing import Any, Optional
 
 from django.contrib.auth.models import (
@@ -5,6 +7,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
 )
 from django.db import models
+from django.utils.text import slugify
 from django.utils.translation import gettext as _
 
 
@@ -59,3 +62,21 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+
+
+def user_image_file_path(instance, filename):
+    _, extension = os.path.splitext(filename)
+
+    filename = f"{slugify(instance.info)}--{uuid.uuid4()}.{extension}"
+
+    return os.path.join("uploads/users/", filename)
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    bio = models.TextField(blank=True, null=True)
+    avatar = models.ImageField(
+        upload_to=user_image_file_path,
+        null=True,
+        blank=True
+    )
