@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
 
-from user.models import User
+from user.models import User, Profile
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -50,3 +50,8 @@ class AuthTokenSerializer(serializers.Serializer):
 
         attrs["user"] = user
         return attrs
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    model = Profile
+    fields = "__all__"
