@@ -67,12 +67,13 @@ class User(AbstractUser):
 def user_image_file_path(instance, filename):
     _, extension = os.path.splitext(filename)
 
-    filename = f"{slugify(instance.info)}--{uuid.uuid4()}.{extension}"
+    filename = f"{slugify(instance.name)}--{uuid.uuid4()}{extension}"
 
     return os.path.join("uploads/users/", filename)
 
 
 class Profile(models.Model):
+    name = models.CharField(max_length=65)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True, null=True)
     avatar = models.ImageField(
