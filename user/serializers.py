@@ -53,5 +53,6 @@ class AuthTokenSerializer(serializers.Serializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    model = Profile
-    fields = "__all__"
+    class Meta:
+        model = Profile
+        fields = "__all__"
