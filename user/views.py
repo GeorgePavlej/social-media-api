@@ -1,11 +1,20 @@
-from rest_framework import generics
+from typing import Any
+
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, viewsets, filters, permissions
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from user.serializers import UserSerializer, AuthTokenSerializer
+from user.models import Profile
+from user.permissions import IsOwnerOrReadOnly
+from user.serializers import (
+    UserSerializer,
+    AuthTokenSerializer,
+    ProfileSerializer
+)
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -34,3 +43,11 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
         response.delete_cookie("refresh_token")
 
         return response
+
+
+class ProfileUserViewSet(viewsets.ModelViewSet):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ["bio", "name"]
+    permission_classes = (IsOwnerOrReadOnly, )
