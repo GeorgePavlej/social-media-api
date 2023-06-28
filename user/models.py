@@ -10,6 +10,8 @@ from django.db import models
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 
+from api_service import settings
+
 
 class UserManager(BaseUserManager):
     """Define a model manager for User model with no username field."""
@@ -32,7 +34,7 @@ class UserManager(BaseUserManager):
         self,
         email: str,
         password: Optional[str] = None,
-        **extra_fields: dict[str, bool]
+        **extra_fields: dict[str, bool],
     ) -> AbstractUser:
         """Create and save a regular User with the given email and password."""
         extra_fields.setdefault("is_staff", False)
@@ -76,8 +78,20 @@ class Profile(models.Model):
     name = models.CharField(max_length=65)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True, null=True)
-    avatar = models.ImageField(
-        upload_to=user_image_file_path,
-        null=True,
-        blank=True
+    avatar = models.ImageField(upload_to=user_image_file_path, null=True, blank=True)
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name="following", on_delete=models.CASCADE
     )
+    followed = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name="followers", on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("follower", "followed")
+
+    def __str__(self):
+        return f"{self.follower} follows {self.followed}"
