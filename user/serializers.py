@@ -1,10 +1,13 @@
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
 
-from user.models import User, Profile, Follow
+from user.models import User, Profile, Follow, Posts, Like, Comment
 
 
 class UserSerializer(serializers.ModelSerializer):
+    following = serializers.StringRelatedField(many=True, read_only=True)
+    followers = serializers.StringRelatedField(many=True, read_only=True)
+
     class Meta:
         model = get_user_model()
         fields = ("id", "email", "password", "is_staff", "following", "followers")
@@ -62,3 +65,21 @@ class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         fields = ["id", "follower", "followed", "created_at"]
+
+
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Posts
+        fields = "__all__"
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = "__all__"
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = "__all__"
