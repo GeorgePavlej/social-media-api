@@ -16,7 +16,9 @@ from user.serializers import (
     AuthTokenSerializer,
     ProfileSerializer,
     FollowSerializer,
-    PostSerializer, LikeSerializer, CommentSerializer,
+    PostSerializer,
+    LikeSerializer,
+    CommentSerializer,
 )
 
 
@@ -98,7 +100,11 @@ class LikeViewSet(viewsets.ModelViewSet):
     permission_classes = (IsOwnerOrReadOnly, IsAuthenticated)
 
     def perform_create(self, serializer) -> None:
-        serializer.save(user=self.request.user)
+        user = self.request.user
+        post = serializer.validated_data["posts"]
+        if Like.objects.filter(user=user, posts=post).exists():
+            raise ValidationError("You have already liked this post.")
+        serializer.save(user=user)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
