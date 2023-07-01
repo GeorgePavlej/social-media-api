@@ -11,10 +11,18 @@ from user.views import (
     CreateUserView,
     ManageUserView,
     ProfileUserViewSet,
+    FollowUserViewSet,
+    PostViewSet,
+    LikeViewSet,
+    CommentViewSet
 )
 
 router = DefaultRouter()
 router.register("profile", ProfileUserViewSet)
+router.register("posts", PostViewSet)
+router.register("follow", FollowUserViewSet, basename="follow")
+router.register("likes", LikeViewSet)
+router.register("comments", CommentViewSet)
 
 urlpatterns = [
     path("register/", CreateUserView.as_view(), name="create"),

@@ -10,6 +10,8 @@ from django.db import models
 from django.utils.text import slugify
 from django.utils.translation import gettext as _
 
+from api_service import settings
+
 
 class UserManager(BaseUserManager):
     """Define a model manager for User model with no username field."""
@@ -32,7 +34,7 @@ class UserManager(BaseUserManager):
         self,
         email: str,
         password: Optional[str] = None,
-        **extra_fields: dict[str, bool]
+        **extra_fields: dict[str, bool],
     ) -> AbstractUser:
         """Create and save a regular User with the given email and password."""
         extra_fields.setdefault("is_staff", False)
@@ -64,7 +66,7 @@ class User(AbstractUser):
     objects = UserManager()
 
 
-def user_image_file_path(instance, filename):
+def profile_image_file_path(instance, filename: str) -> str:
     _, extension = os.path.splitext(filename)
 
     filename = f"{slugify(instance.name)}--{uuid.uuid4()}{extension}"
@@ -72,12 +74,85 @@ def user_image_file_path(instance, filename):
     return os.path.join("uploads/users/", filename)
 
 
+def posts_image_file_path(instance, filename: str) -> str:
+    _, extension = os.path.splitext(filename)
+
+    filename = f"{slugify(instance.user)}--{uuid.uuid4()}{extension}"
+
+    return os.path.join("uploads/posts/", filename)
+
+
 class Profile(models.Model):
     name = models.CharField(max_length=65)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True, null=True)
     avatar = models.ImageField(
-        upload_to=user_image_file_path,
+        upload_to=profile_image_file_path,
         null=True,
         blank=True
     )
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="following",
+        on_delete=models.CASCADE
+    )
+    followed = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="followers",
+        on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("follower", "followed")
+
+    def __str__(self) -> str:
+        return f"{self.follower} follows {self.followed}"
+
+
+class Posts(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    image = models.ImageField(
+        upload_to=posts_image_file_path,
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    hashtags = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return self.content[:50]
+
+
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    posts = models.ForeignKey(Posts, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "posts")
+
+    def __str__(self) -> str:
+        return f"{self.user.email} likes {self.posts.content[:30]}"
+
+
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    posts = models.ForeignKey(Posts, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return self.content[:50]
