@@ -1,6 +1,6 @@
 from typing import Any
 
-from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import generics, viewsets, filters
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.exceptions import ValidationError
@@ -53,9 +53,26 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 class ProfileUserViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
-    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = ["bio", "name"]
     permission_classes = (IsOwnerOrReadOnly,)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="name",
+                type=str,
+                description="Filter by name (ex. ?name=George)",
+                location=OpenApiParameter.QUERY
+            ),
+            OpenApiParameter(
+                name="bio",
+                type=str,
+                description="Filter by bio (ex. ?bio=info from bio field)",
+                location=OpenApiParameter.QUERY
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class FollowUserViewSet(viewsets.ModelViewSet):
@@ -81,15 +98,42 @@ class PostViewSet(viewsets.ModelViewSet):
     queryset = Posts.objects.all()
     serializer_class = PostSerializer
     permission_classes = (IsOwnerOrReadOnly, IsAuthenticated)
-    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = ["content", "hashtags"]
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="content",
+                type=str,
+                description="Filter by content (ex. ?content=)",
+                location=OpenApiParameter.QUERY
+            ),
+            OpenApiParameter(
+                name="hashtags",
+                type=str,
+                description="Filter by hashtags (ex. ?hashtags=Summer)",
+                location=OpenApiParameter.QUERY
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def perform_create(self, serializer) -> None:
         serializer.save(user=self.request.user)
 
     def get_queryset(self):
         user = self.request.user
-        return Posts.objects.filter(user=user) | Posts.objects.filter(
+        content = self.request.query_params.get("content", None)
+        hashtags = self.request.query_params.get("hashtags", None)
+        queryset = Posts.objects.all()
+
+        if content:
+            queryset = queryset.filter(content__icontains=content)
+
+        if hashtags:
+            queryset = queryset.filter(hashtags__icontains=hashtags)
+
+        return queryset.filter(user=user) | queryset.filter(
             user__in=user.following.values_list("followed", flat=True)
         )
 
