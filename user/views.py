@@ -1,11 +1,14 @@
 from typing import Any
 
+from django.db.models import QuerySet
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import generics, viewsets, filters
+from rest_framework import generics, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.serializers import Serializer
 from rest_framework.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -35,10 +38,10 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
 
-    def get_object(self):
+    def get_object(self) -> User:
         return self.request.user
 
-    def post(self, request, *args, **kwargs) -> Response:
+    def post(self, request, *args: Any, **kwargs: Any) -> Response:
         refresh_token = request.COOKIES.get("refresh_token")
         if refresh_token:
             token = RefreshToken(refresh_token)
@@ -80,8 +83,10 @@ class FollowUserViewSet(viewsets.ModelViewSet):
     serializer_class = FollowSerializer
     permission_classes = (IsAuthenticated,)
 
-    def perform_create(self, serializer) -> None:
-        followed_user = User.objects.get(id=serializer.validated_data["followed"].id)
+    def perform_create(self, serializer: Serializer) -> None:
+        followed_user = User.objects.get(
+            id=serializer.validated_data["followed"].id
+        )
 
         if self.request.user == followed_user:
             raise ValidationError({"message": "You cannot follow yourself."})
@@ -89,7 +94,11 @@ class FollowUserViewSet(viewsets.ModelViewSet):
         if Follow.objects.filter(
             follower=self.request.user, followed=followed_user
         ).exists():
-            raise ValidationError({"message": "You are already following this user."})
+            raise ValidationError(
+                {
+                    "message": "You are already following this user."
+                }
+            )
 
         serializer.save(follower=self.request.user)
 
@@ -115,13 +124,13 @@ class PostViewSet(viewsets.ModelViewSet):
             ),
         ]
     )
-    def list(self, request, *args, **kwargs):
+    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         return super().list(request, *args, **kwargs)
 
-    def perform_create(self, serializer) -> None:
+    def perform_create(self, serializer: Serializer) -> None:
         serializer.save(user=self.request.user)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Posts]:
         user = self.request.user
         content = self.request.query_params.get("content", None)
         hashtags = self.request.query_params.get("hashtags", None)
@@ -143,7 +152,7 @@ class LikeViewSet(viewsets.ModelViewSet):
     serializer_class = LikeSerializer
     permission_classes = (IsOwnerOrReadOnly, IsAuthenticated)
 
-    def perform_create(self, serializer) -> None:
+    def perform_create(self, serializer: Serializer) -> None:
         user = self.request.user
         post = serializer.validated_data["posts"]
         if Like.objects.filter(user=user, posts=post).exists():
@@ -156,5 +165,5 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (IsOwnerOrReadOnly, IsAuthenticated)
 
-    def perform_create(self, serializer) -> None:
+    def perform_create(self, serializer: Serializer) -> None:
         serializer.save(user=self.request.user)
