@@ -1,7 +1,14 @@
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
 
-from user.models import User, Profile, Follow, Posts, Like, Comment
+from user.models import (
+    User,
+    Profile,
+    Follow,
+    Posts,
+    Like,
+    Comment
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -62,7 +69,7 @@ class AuthTokenSerializer(serializers.Serializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = "__all__"
+        fields = ["id", "name", "bio", "avatar"]
 
 
 class FollowSerializer(serializers.ModelSerializer):
@@ -74,7 +81,9 @@ class FollowSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Posts
-        fields = "__all__"
+        fields = [
+            "id", "content", "image", "created_at", "updated_at", "hashtags"
+        ]
 
 
 class LikeSerializer(serializers.ModelSerializer):
