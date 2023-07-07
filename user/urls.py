@@ -20,7 +20,7 @@ from user.views import (
 router = DefaultRouter()
 router.register("profile", ProfileUserViewSet)
 router.register("posts", PostViewSet)
-router.register("follow", FollowUserViewSet, basename="follow")
+router.register("follow", FollowUserViewSet)
 router.register("likes", LikeViewSet)
 router.register("comments", CommentViewSet)
 
