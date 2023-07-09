@@ -1,10 +1,9 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
-    TokenVerifyView
+    TokenVerifyView,
 )
 
 from user.views import (
@@ -14,7 +13,8 @@ from user.views import (
     FollowUserViewSet,
     PostViewSet,
     LikeViewSet,
-    CommentViewSet
+    CommentViewSet,
+    UserListView,
 )
 
 router = DefaultRouter()
@@ -30,6 +30,7 @@ urlpatterns = [
     path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("me/", ManageUserView.as_view(), name="manage"),
+    path("users/", UserListView.as_view(), name="users"),
 ] + router.urls
 
 app_name = "user"
