@@ -69,6 +69,8 @@ The API documentation is available at:
 
 ### Users Service
 
+- `GET: /users/` : List all users.
+
 - `POST: /users/` : Register a new user.
 
 - `POST: /users/token/` : Obtain JWT tokens.
