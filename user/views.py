@@ -53,10 +53,19 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
         return response
 
 
+class UserListView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
+
+
 class ProfileUserViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (IsOwnerOrReadOnly,)
+
+    def perform_create(self, serializer: Serializer) -> None:
+        serializer.save(user=self.request.user)
 
     @extend_schema(
         parameters=[
