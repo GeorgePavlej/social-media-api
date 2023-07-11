@@ -5,23 +5,13 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from user.models import User, Like, Posts
+from user.models import User, Posts
 
 POST_URL = reverse("user:posts-list")
 
 
 def create_test_user(email: str, password: str) -> User:
     return User.objects.create_user(email=email, password=password)
-
-
-def create_test_like(
-        user: User,
-        posts: Posts,
-        created_at: date
-) -> Like:
-    return Like.objects.create(
-        user=user, posts=posts, created_at=created_at
-    )
 
 
 def create_test_post(
@@ -109,3 +99,34 @@ class PostApiTests(TestCase):
         ).replace("+00:00", "Z")
         self.assertEqual(response.data[0]["updated_at"], updated_at_str)
         self.assertEqual(response.data[0]["hashtags"], post.hashtags)
+
+    def test_update_post(self) -> None:
+        user = create_test_user("test@example.com", "password")
+
+        post = create_test_post(
+            user=user,
+            content="Original content",
+            image="",
+            created_at=date.today(),
+            updated_at=date.today() + timedelta(days=2),
+            hashtags="test hashtags"
+        )
+
+        self.client.force_authenticate(user)
+
+        updated_data = {
+            "content": "Updated content",
+            "image": "",
+            "created_at": date.today(),
+            "hashtags": "Updated hashtags"
+        }
+
+        response = self.client.put(
+            reverse("user:posts-detail", kwargs={"pk": post.id}), data=updated_data
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        post.refresh_from_db()
+        self.assertEqual(post.content, "Updated content")
+        self.assertEqual(post.updated_at.date(), date.today())
+        self.assertEqual(post.hashtags, "Updated hashtags")
